@@ -1,0 +1,34 @@
+# ═══════════════════════════════════════════════════════════
+#   EnglishVoiceMaster — Local Development Stack
+#   Used ONLY for local dev. Not needed on Vercel.
+# ═══════════════════════════════════════════════════════════
+services:
+  # PostgreSQL — local database
+  postgres:
+    image: postgres:15-alpine
+    container_name: evm_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: englishvoicemaster
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "55432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Redis (for future FSM scaling)
+  redis:
+    image: redis:7-alpine
+    container_name: evm_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:

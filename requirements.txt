@@ -1,0 +1,25 @@
+# ═══════════════════════════════════════════════════════════
+#   EnglishVoiceMaster — Python dependencies
+#   Works for both Vercel deployment and local development
+# ═══════════════════════════════════════════════════════════
+
+# Telegram bot framework
+aiogram==3.7.0
+
+# Async HTTP client (Yandex APIs, YuKassa)
+aiohttp==3.9.5
+
+# Database ORM + async PostgreSQL driver
+sqlalchemy[asyncio]==2.0.30
+asyncpg==0.29.0
+
+# Environment variables
+python-dotenv==1.0.1
+
+# DB migrations (local only — not used on Vercel)
+alembic==1.13.1
+
+# ── Vercel runtime note ─────────────────────────────────────
+# pydub and ffmpeg are NOT included — Vercel has no ffmpeg binary.
+# Audio is sent directly to Yandex SpeechKit in oggopus format.
+# ─────────────────────────────────────────────────────────────

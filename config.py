@@ -2,11 +2,13 @@
 EnglishVoiceMaster — unified configuration.
 Works for both Vercel (webhook) and local (polling) modes.
 """
+import logging
 import os
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -54,7 +56,17 @@ class Config:
 
     def __post_init__(self):
         raw = os.getenv("ADMIN_IDS", "")
-        self.ADMIN_IDS = [int(x.strip()) for x in raw.split(",") if x.strip()] if raw else []
+        parsed_admin_ids: list[int] = []
+        if raw:
+            for value in raw.split(","):
+                candidate = value.strip()
+                if not candidate:
+                    continue
+                try:
+                    parsed_admin_ids.append(int(candidate))
+                except ValueError:
+                    logger.warning("Ignoring invalid ADMIN_IDS value: %s", candidate)
+        self.ADMIN_IDS = parsed_admin_ids
         # Accept both "b1g..." and "ID=b1g..." formats from UI copy/paste.
         if self.YANDEX_FOLDER_ID.startswith("ID="):
             self.YANDEX_FOLDER_ID = self.YANDEX_FOLDER_ID.split("=", 1)[1].strip()

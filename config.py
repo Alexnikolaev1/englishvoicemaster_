@@ -70,6 +70,16 @@ class Config:
         # Accept both "b1g..." and "ID=b1g..." formats from UI copy/paste.
         if self.YANDEX_FOLDER_ID.startswith("ID="):
             self.YANDEX_FOLDER_ID = self.YANDEX_FOLDER_ID.split("=", 1)[1].strip()
+        # Vercel Storage often provides sync URL (postgresql://...).
+        # We use async SQLAlchemy engine, so normalize to asyncpg DSN.
+        if self.DATABASE_URL.startswith("postgresql://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace(
+                "postgresql://", "postgresql+asyncpg://", 1
+            )
+        elif self.DATABASE_URL.startswith("postgres://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace(
+                "postgres://", "postgresql+asyncpg://", 1
+            )
 
     @property
     def effective_webhook_base(self) -> str:

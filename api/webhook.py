@@ -79,6 +79,11 @@ async def process_update(body: bytes, secret_header: str | None) -> tuple[int, s
     except Exception as e:
         logger.error(f"Update processing error: {e}", exc_info=True)
         return 200, "OK"  # Always return 200 to Telegram to avoid retries
+    finally:
+        # In Vercel mode bot is created per request (see app_factory),
+        # so we should always close the underlying aiohttp session.
+        if config.is_vercel:
+            await bot.session.close()
 
 
 class handler(BaseHTTPRequestHandler):

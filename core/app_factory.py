@@ -25,6 +25,14 @@ _dp: Dispatcher | None = None
 
 def get_bot() -> Bot:
     global _bot
+    # In serverless mode each request can run in a fresh event loop.
+    # Reusing one Bot instance across closed loops causes "Event loop is closed".
+    if config.is_vercel:
+        return Bot(
+            token=config.BOT_TOKEN,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
+
     if _bot is None:
         _bot = Bot(
             token=config.BOT_TOKEN,

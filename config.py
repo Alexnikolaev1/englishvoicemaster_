@@ -105,9 +105,12 @@ class Config:
             if ssl_already_set:
                 continue
 
-            # Most managed Postgres providers use sslmode=require.
-            # asyncpg expects 'ssl', and SQLAlchemy handles string bools.
-            normalized_query.append(("ssl", "true"))
+            # asyncpg expects ssl as mode-like value
+            # (disable|allow|prefer|require|verify-ca|verify-full).
+            if value in {"disable", "allow", "prefer", "require", "verify-ca", "verify-full"}:
+                normalized_query.append(("ssl", value))
+            else:
+                normalized_query.append(("ssl", "require"))
 
         rebuilt_query = urlencode(normalized_query)
         return urlunsplit((parts.scheme, parts.netloc, parts.path, rebuilt_query, parts.fragment))

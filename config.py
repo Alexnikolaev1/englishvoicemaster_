@@ -5,6 +5,7 @@ Works for both Vercel (webhook) and local (polling) modes.
 import logging
 import os
 from dataclasses import dataclass, field
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -80,6 +81,36 @@ class Config:
             self.DATABASE_URL = self.DATABASE_URL.replace(
                 "postgres://", "postgresql+asyncpg://", 1
             )
+        self.DATABASE_URL = self._normalize_asyncpg_ssl_query(self.DATABASE_URL)
+
+    @staticmethod
+    def _normalize_asyncpg_ssl_query(database_url: str) -> str:
+        """
+        asyncpg does not accept 'sslmode' kwarg, only 'ssl'.
+        Convert common Postgres DSN query param sslmode=require -> ssl=true.
+        """
+        if "postgresql+asyncpg://" not in database_url or "sslmode=" not in database_url:
+            return database_url
+
+        parts = urlsplit(database_url)
+        query_items = parse_qsl(parts.query, keep_blank_values=True)
+        normalized_query: list[tuple[str, str]] = []
+        ssl_already_set = any(k == "ssl" for k, _ in query_items)
+
+        for key, value in query_items:
+            if key != "sslmode":
+                normalized_query.append((key, value))
+                continue
+
+            if ssl_already_set:
+                continue
+
+            # Most managed Postgres providers use sslmode=require.
+            # asyncpg expects 'ssl', and SQLAlchemy handles string bools.
+            normalized_query.append(("ssl", "true"))
+
+        rebuilt_query = urlencode(normalized_query)
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, rebuilt_query, parts.fragment))
 
     @property
     def effective_webhook_base(self) -> str:
